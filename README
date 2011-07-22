@@ -1,0 +1,71 @@
+---------------------------------------------------
+OVERVIEW
+---------------------------------------------------
+
+Pimath is a set of boost.python bindings for ILM's Imath library. Contributions to help
+bring its coverage up to 100% are welcome.
+
+Pimath is NOT an attempt to improve Imath or extend its functionality.
+
+Pimath binds the Imath API as closely as possible. Each hpp file contains a comment block
+at the top, highlighting cases where the bindings differ and why. Common reasons include:
+
+- Making a function signature more Pythonic;
+- Removing slightly optimised functions (where the overhead of python itself would vastly
+  outweigh the optimisation);
+- Removing API redundancy;
+- Changing misleading Imath function names (rare).
+
+Nice things about pimath:
+- It provides integral template instantiations where possible - eg V3i;
+- It provides 'half' template instantiations where possible - eg M33h;
+- It provides to- and from-python conversion for the Imath 'half' type;
+- It spreads type instantiation over several cpp files for quick multithreaded compiling.
+- It's organised as a mirror image of Imath - it has corresponding headers, and a free
+  function in Imath is a free function in pimath. If you know Imath, you know pimath.
+
+
+---------------------------------------------------
+COMMON DEVIATIONS FROM IMATH API
+---------------------------------------------------
+
+There are some deviations from the Imath API that are so common that we list them here,
+instead of in the source comments. They are as follows:
+
+Stripping the returned self-reference.
+- - - - - - - - - - - - - - - - - - - - - - - - - -
+Consider:
+const Vec2&	Vec2::normalize();
+While this is useful in C++, it's not very Pythonic and there's no real advantage to the
+overhead of returning a custodian_with_ward, so in pimath this function (and functions
+like it) return nothing (Vec2::normalize*d*() however, would return a value as expected).
+
+Moving an out-arg or in/out arg to the return arg.
+- - - - - - - - - - - - - - - - - - - - - - - - - -
+Consider:
+void Matrix33::multVecMatrix(const Vec2& src, Vec2& dst) const;
+Here the result is written into 'dst', and is not returned for performance reasons (ie to
+avoid the copy-by-value in C++). Pimath considers this an unworthy optimisation (purely in
+the context of python of course) and changes the function signature to the more Pythonic:
+Vec2 Matrix33::multVecMatrix(const Vec2& src) const;
+In fact, pimath NEVER changes an input argument, to any function or method.
+
+Adding 'value' property.
+- - - - - - - - - - - - - - - - - - - - - - - - - -
+Pimath adds a 'value' read-writable property to several of the Imath types. This property
+exposes the data in the type as a tuple, or tuple of tuples etc. Some examples include:
+Vec2: (1,2)
+Matrix33: ((1,0,0), (0,1,0), (0,0,1))
+Matrix44: ((1,0,0,0), (0,1,0,0), (0,0,1,0), (0,0,0,1))
+Box: ((-5,-3,-1), (10, 9, 9)) OR (1, 2, 3, 4, 5, 6)
+Sphere: ( (1,2,2), 3) OR ( 1, 2, 2, 3 )
+
+Omissions
+- - - - - - - - - - - - - - - - - - - - - - - - - -
+The following headers were omitted:
+Fun: This header only contains a small number of simple, generic functions better implemented in python.
+Int64: This header contains nothing but a typedef.
+Math: This merely wraps standard math functions.
+Color3c/Vec3c: disabled by default as it unavoidably compiles with warnings (from V3c)
+Half Specializations are missing from certain data types (such as Quat) because imath fails to compile for
+such specializations.

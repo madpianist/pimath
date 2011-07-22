@@ -1,0 +1,11 @@
+To install:
+
+python setup.py build
+python setup.py install
+
+Requires
+Ilmbase 1.0.2
+Boost 1.37.0 or 1.45.0
+
+Tested on:
+CentOS X64; Ilmbase 1.0.2; Boost 1.37.0 and 1.45.0
